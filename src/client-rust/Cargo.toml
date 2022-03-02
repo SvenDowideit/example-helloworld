@@ -9,3 +9,4 @@ edition = "2021"
 anyhow = "1.0.55"                 # Flexible concrete Error type built on std::error::Error
 solana-cli-config = "1.9.9"       # Blockchain, Rebuilt for Scale
 solana-sdk = "1.9.9"              # Solana SDK
+solana-client = "1.9.9"           # Solana Client
