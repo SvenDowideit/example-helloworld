@@ -1,7 +1,10 @@
 use anyhow::anyhow;
 use solana_cli_config::Config;
+use solana_sdk::signature::Signer;
+use solana_sdk::signer::keypair::read_keypair_file;
 
 fn main() {
+    println!("-----");
     println!("Let's say hello to a Solana account...");
     // start by getting the rpc url and account from the cli config file
     // https://docs.rs/solana-cli-config/latest/solana_cli_config/
@@ -20,8 +23,12 @@ fn main() {
         cli_config.json_rpc_url
     );
 
+    let payer_key = read_keypair_file(cli_config.keypair_path).unwrap();
     // // get payer keypair from config.keypair_path
-    // println!("Using account CG4hWYmpXGe9TE3BBM9kdMzEBhugEocqAMvHxpW9jF7a containing <SOL> SOL to pay for fees");
+    println!(
+        "Using account {:?} containing <SOL> SOL to pay for fees",
+        payer_key.pubkey()
+    );
     // // get programid from ../../dist/program/helloworld-keypair.json (created by ts client for now)
     // println!("Using program 5gBQEUwAnt8qowhMP1ZmXMnTLnRbz4CUzwVCzXo1CWdz");
     // // get greeting account - key derived from "hello" so its easy to find.
