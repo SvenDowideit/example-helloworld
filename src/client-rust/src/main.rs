@@ -1,10 +1,20 @@
 use anyhow::anyhow;
+use borsh::{BorshDeserialize, BorshSerialize};
 use solana_cli_config::Config;
 use solana_client::rpc_client::RpcClient;
+use solana_sdk::instruction::AccountMeta;
+use solana_sdk::instruction::Instruction;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::signer::keypair::read_keypair_file;
-use solana_sdk::system_transaction;
+use solana_sdk::transaction::Transaction;
+
+/// Define the type of state stored in accounts
+#[derive(BorshSerialize, BorshDeserialize, Debug)]
+pub struct GreetingAccount {
+    /// number of greetings
+    pub counter: u32,
+}
 
 fn main() {
     println!("-----");
@@ -58,11 +68,31 @@ fn main() {
 
     // println!("FoSMxh52TDgDAjkpnCSDuDbLwxmAugvzof1T6nhmjwvS has been greeted 14 time(s)");
 
-    let lamports = 33;
-    let latest_blockhash = client.get_latest_blockhash().unwrap();
-    let tx = system_transaction::transfer(&payer_key, &greeted, lamports, latest_blockhash);
-    let signature = client.send_and_confirm_transaction(&tx).unwrap();
+    // let lamports = 33;
+    // let latest_blockhash = client.get_latest_blockhash().unwrap();
+    // let tx = system_transaction::transfer(&payer_key, &greeted, lamports, latest_blockhash);
+    // let signature = client.send_and_confirm_transaction(&tx).unwrap();
+    // println!("Success: {:?}", signature);
 
+    let g = GreetingAccount { counter: 0 };
+    let instr = Instruction::new_with_borsh(
+        program_key.pubkey(),
+        &g,
+        vec![AccountMeta::new(greeted, false)],
+    );
+    let blockhash = client.get_latest_blockhash().unwrap();
+    let tx = Transaction::new_signed_with_payer(
+        &[instr],
+        Some(&payer_key.pubkey()),
+        &[&payer_key],
+        blockhash,
+    );
+    let signature = client.send_and_confirm_transaction(&tx).unwrap();
     println!("Success: {:?}", signature);
+
+    let greeted_account = client.get_account(&greeted).unwrap();
+    let data = GreetingAccount::try_from_slice(&greeted_account.data).unwrap();
+    println!("{:?} has been greeted {:?} time(s)!", greeted, data.counter);
+
     println!("");
 }
