@@ -4,6 +4,7 @@ use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::Signer;
 use solana_sdk::signer::keypair::read_keypair_file;
+use solana_sdk::system_transaction;
 
 fn main() {
     println!("-----");
@@ -33,7 +34,7 @@ fn main() {
     println!(
         "Using account {:?} containing {:?} SOL to pay for fees",
         payer_key.pubkey(),
-        payer_balance
+        payer_balance / 1000000000
     );
     // TODO: get programid from ../../dist/program/helloworld-keypair.json (created by ts client for now)
     let program_key = read_keypair_file("../../dist/program/helloworld-keypair.json").unwrap();
@@ -48,8 +49,20 @@ fn main() {
     // // get greeting account - key derived from "hello" so its easy to find.
     let greeted =
         Pubkey::create_with_seed(&payer_key.pubkey(), &"hello", &program_key.pubkey()).unwrap();
-    println!("Saying hello to {:?}", greeted);
+    let greeted_balance = client.get_balance(&greeted).unwrap();
+    println!(
+        "Saying hello to {:?}: balance: {:?}",
+        greeted,
+        greeted_balance / 1000000000
+    );
+
     // println!("FoSMxh52TDgDAjkpnCSDuDbLwxmAugvzof1T6nhmjwvS has been greeted 14 time(s)");
-    println!("Success");
+
+    let lamports = 33;
+    let latest_blockhash = client.get_latest_blockhash().unwrap();
+    let tx = system_transaction::transfer(&payer_key, &greeted, lamports, latest_blockhash);
+    let signature = client.send_and_confirm_transaction(&tx).unwrap();
+
+    println!("Success: {:?}", signature);
     println!("");
 }
